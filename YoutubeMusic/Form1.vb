@@ -14,8 +14,7 @@ Public Class Form1
     Dim currentTime, duration, title, state As String
     Dim volume As Integer
     Dim prevVolume As Integer
-    'Private webClient As WebClient = New WebClient
-    'Dim key As String = "AIzaSyB2MaOwBjtV_G_LHOPNZxJEeWKQR7ZXJOM"
+    Dim hotkey As New HotKeyRegistryClass(Me.Handle)
     Public Sub New()
         InitializeComponent()
 
@@ -23,10 +22,31 @@ Public Class Form1
         CefSharp.Cef.Initialize(settings)
 
         browser = New WinForms.ChromiumWebBrowser("https://rudrasharma.net/extraStuff/yt.php")
+        'browser = New WinForms.ChromiumWebBrowser("https://rudrasharma.net/extraStuff/welcome.php")
         pnlBrowser.Controls.Add(browser)
         browser.Enabled = False
         AddHandler browser.LoadingStateChanged, AddressOf OnLoadingStateChanged
+        hotkey.Register(HotKeyRegistryClass.Modifiers.MOD_NONE, Keys.MediaPlayPause)
+        hotkey.Register(HotKeyRegistryClass.Modifiers.MOD_NONE, Keys.MediaNextTrack)
+        hotkey.Register(HotKeyRegistryClass.Modifiers.MOD_NONE, Keys.MediaPreviousTrack)
     End Sub
+    Protected Overrides Sub WndProc(ByRef m As System.Windows.Forms.Message)
+        If m.Msg = HotKeyRegistryClass.Messages.WM_HOTKEY Then
+            Dim ID As String = m.WParam.ToString()
+            Select Case ID
+                Case 0
+                    PausePlay()
+                Case 1
+                    NextTrack()
+                Case 2
+                    PrevTrack()
+                Case Else
+
+            End Select
+        End If
+        MyBase.WndProc(m)
+    End Sub
+
     Function removeOverlay() As Boolean
         pnlOverlay.Visible = False
         Return True
@@ -47,21 +67,29 @@ Public Class Form1
 
         End If
     End Sub
-
-    Private Sub picPausePlay_Click(sender As Object, e As EventArgs) Handles picPausePlay.Click
+    Sub PausePlay()
         If state = "Playing" Then
             browser.ExecuteScriptAsync("pauseVideo();")
         ElseIf state = "Paused" Then
             browser.ExecuteScriptAsync("playVideo();")
         End If
     End Sub
+    Sub NextTrack()
+        browser.ExecuteScriptAsync("nextVideo();")
+    End Sub
+    Sub PrevTrack()
+        browser.ExecuteScriptAsync("prevVideo();")
+    End Sub
+    Private Sub picPausePlay_Click(sender As Object, e As EventArgs) Handles picPausePlay.Click
+        PausePlay()
+    End Sub
 
     Private Sub picNext_Click(sender As Object, e As EventArgs) Handles picNext.Click
-        browser.ExecuteScriptAsync("nextVideo();")
+        NextTrack()
     End Sub
 
     Private Sub picPrev_Click(sender As Object, e As EventArgs) Handles picPrev.Click
-        browser.ExecuteScriptAsync("prevVideo();")
+        PrevTrack()
     End Sub
     Private Sub picVolume_Click(sender As Object, e As EventArgs) Handles picVolume.Click
         If volume = 0 Then
@@ -155,6 +183,10 @@ Public Class Form1
         End If
     End Sub
 
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+
+    End Sub
+
     Function convertSecondsToTime(seconds As String) As String
         Dim sec As Double = Double.Parse(seconds)
         sec = Math.Round(sec)
@@ -177,5 +209,10 @@ Public Class Form1
         If isPlayerReady = True Then
             browser.ExecuteScriptAsync("seekTo(" + trkDuration.Value.ToString + ")")
         End If
+    End Sub
+
+    Private Sub Form1_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
+        'RemoveGlobalHotkeySupport()
+        hotkey.Unregister(0)
     End Sub
 End Class

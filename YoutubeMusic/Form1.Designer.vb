@@ -38,8 +38,8 @@ Partial Class Form1
         Me.lblCurrentTime = New System.Windows.Forms.Label()
         Me.trkDuration = New System.Windows.Forms.TrackBar()
         Me.pnlOverlay = New System.Windows.Forms.Panel()
-        Me.lblLoadingContent = New System.Windows.Forms.Label()
         Me.tmrSettings = New System.Windows.Forms.Timer(Me.components)
+        Me.lblLoading = New System.Windows.Forms.Label()
         Me.picVolume = New System.Windows.Forms.PictureBox()
         Me.picThumbnail = New System.Windows.Forms.PictureBox()
         Me.picRepeat = New System.Windows.Forms.PictureBox()
@@ -90,6 +90,7 @@ Partial Class Form1
         '
         Me.lblSettings.AutoSize = True
         Me.lblSettings.Font = New System.Drawing.Font("Microsoft Sans Serif", 21.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblSettings.ForeColor = System.Drawing.Color.White
         Me.lblSettings.Location = New System.Drawing.Point(12, 9)
         Me.lblSettings.Name = "lblSettings"
         Me.lblSettings.Size = New System.Drawing.Size(128, 33)
@@ -215,27 +216,29 @@ Partial Class Form1
         Me.pnlOverlay.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
             Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.pnlOverlay.Controls.Add(Me.lblLoadingContent)
+        Me.pnlOverlay.Controls.Add(Me.lblLoading)
         Me.pnlOverlay.Location = New System.Drawing.Point(169, 40)
         Me.pnlOverlay.Name = "pnlOverlay"
         Me.pnlOverlay.Size = New System.Drawing.Size(631, 306)
         Me.pnlOverlay.TabIndex = 2
         '
-        'lblLoadingContent
-        '
-        Me.lblLoadingContent.Dock = System.Windows.Forms.DockStyle.Fill
-        Me.lblLoadingContent.Font = New System.Drawing.Font("Microsoft Sans Serif", 72.0!, CType((System.Drawing.FontStyle.Bold Or System.Drawing.FontStyle.Italic), System.Drawing.FontStyle), System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.lblLoadingContent.ForeColor = System.Drawing.SystemColors.Control
-        Me.lblLoadingContent.Location = New System.Drawing.Point(0, 0)
-        Me.lblLoadingContent.Name = "lblLoadingContent"
-        Me.lblLoadingContent.Size = New System.Drawing.Size(631, 306)
-        Me.lblLoadingContent.TabIndex = 0
-        Me.lblLoadingContent.Text = "Loading Content...."
-        Me.lblLoadingContent.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-        '
         'tmrSettings
         '
         Me.tmrSettings.Enabled = True
+        '
+        'lblLoading
+        '
+        Me.lblLoading.BackColor = System.Drawing.Color.Transparent
+        Me.lblLoading.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.lblLoading.Font = New System.Drawing.Font("Microsoft Sans Serif", 18.0!, CType((System.Drawing.FontStyle.Bold Or System.Drawing.FontStyle.Italic), System.Drawing.FontStyle), System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblLoading.ForeColor = System.Drawing.Color.White
+        Me.lblLoading.Image = Global.YoutubeMusic.My.Resources.Resources.loading2
+        Me.lblLoading.Location = New System.Drawing.Point(0, 0)
+        Me.lblLoading.Name = "lblLoading"
+        Me.lblLoading.Size = New System.Drawing.Size(631, 306)
+        Me.lblLoading.TabIndex = 1
+        Me.lblLoading.Text = "Loading. Please Wait."
+        Me.lblLoading.TextAlign = System.Drawing.ContentAlignment.BottomCenter
         '
         'picVolume
         '
@@ -358,7 +361,6 @@ Partial Class Form1
     Friend WithEvents pnlBottomBar As Panel
     Friend WithEvents pnlOverlay As Panel
     Friend WithEvents tmrSettings As Timer
-    Friend WithEvents lblLoadingContent As Label
     Friend WithEvents picThumbnail As PictureBox
     Friend WithEvents lblVideoTitle As Label
     Friend WithEvents pnlMediaControls As Panel
@@ -374,4 +376,5 @@ Partial Class Form1
     Friend WithEvents lblDuration As Label
     Friend WithEvents lblCurrentTime As Label
     Friend WithEvents trkDuration As TrackBar
+    Friend WithEvents lblLoading As Label
 End Class
