@@ -31,37 +31,38 @@ Partial Class Form1
         Me.pnlBottomBar = New System.Windows.Forms.Panel()
         Me.pnlVolumeControl = New System.Windows.Forms.Panel()
         Me.trkVolume = New System.Windows.Forms.TrackBar()
+        Me.picVolume = New System.Windows.Forms.PictureBox()
         Me.pnlVideoInfo = New System.Windows.Forms.Panel()
+        Me.picThumbnail = New System.Windows.Forms.PictureBox()
         Me.lblVideoTitle = New System.Windows.Forms.Label()
         Me.pnlMediaControls = New System.Windows.Forms.Panel()
         Me.lblDuration = New System.Windows.Forms.Label()
         Me.lblCurrentTime = New System.Windows.Forms.Label()
         Me.trkDuration = New System.Windows.Forms.TrackBar()
-        Me.pnlOverlay = New System.Windows.Forms.Panel()
-        Me.tmrSettings = New System.Windows.Forms.Timer(Me.components)
-        Me.lblLoading = New System.Windows.Forms.Label()
-        Me.picVolume = New System.Windows.Forms.PictureBox()
-        Me.picThumbnail = New System.Windows.Forms.PictureBox()
         Me.picRepeat = New System.Windows.Forms.PictureBox()
         Me.picNext = New System.Windows.Forms.PictureBox()
         Me.picPausePlay = New System.Windows.Forms.PictureBox()
         Me.picPrev = New System.Windows.Forms.PictureBox()
         Me.picShuffle = New System.Windows.Forms.PictureBox()
+        Me.pnlOverlay = New System.Windows.Forms.Panel()
+        Me.lblLoading = New System.Windows.Forms.Label()
+        Me.tmrSettings = New System.Windows.Forms.Timer(Me.components)
+        Me.tmrUpdateDisp = New System.Windows.Forms.Timer(Me.components)
         Me.pnlNavigation.SuspendLayout()
         Me.pnlBottomBar.SuspendLayout()
         Me.pnlVolumeControl.SuspendLayout()
         CType(Me.trkVolume, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.picVolume, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.pnlVideoInfo.SuspendLayout()
+        CType(Me.picThumbnail, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.pnlMediaControls.SuspendLayout()
         CType(Me.trkDuration, System.ComponentModel.ISupportInitialize).BeginInit()
-        Me.pnlOverlay.SuspendLayout()
-        CType(Me.picVolume, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.picThumbnail, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.picRepeat, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.picNext, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.picPausePlay, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.picPrev, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.picShuffle, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.pnlOverlay.SuspendLayout()
         Me.SuspendLayout()
         '
         'pnlBrowser
@@ -141,6 +142,16 @@ Partial Class Form1
         Me.trkVolume.TickStyle = System.Windows.Forms.TickStyle.None
         Me.trkVolume.Value = 50
         '
+        'picVolume
+        '
+        Me.picVolume.Image = CType(resources.GetObject("picVolume.Image"), System.Drawing.Image)
+        Me.picVolume.Location = New System.Drawing.Point(16, 40)
+        Me.picVolume.Name = "picVolume"
+        Me.picVolume.Size = New System.Drawing.Size(30, 30)
+        Me.picVolume.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage
+        Me.picVolume.TabIndex = 0
+        Me.picVolume.TabStop = False
+        '
         'pnlVideoInfo
         '
         Me.pnlVideoInfo.Controls.Add(Me.picThumbnail)
@@ -150,6 +161,19 @@ Partial Class Form1
         Me.pnlVideoInfo.Name = "pnlVideoInfo"
         Me.pnlVideoInfo.Size = New System.Drawing.Size(255, 106)
         Me.pnlVideoInfo.TabIndex = 3
+        '
+        'picThumbnail
+        '
+        Me.picThumbnail.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
+        Me.picThumbnail.ErrorImage = Global.YoutubeMusic.My.Resources.Resources.No_Image
+        Me.picThumbnail.Image = Global.YoutubeMusic.My.Resources.Resources.No_Image
+        Me.picThumbnail.Location = New System.Drawing.Point(15, 11)
+        Me.picThumbnail.Name = "picThumbnail"
+        Me.picThumbnail.Size = New System.Drawing.Size(86, 86)
+        Me.picThumbnail.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage
+        Me.picThumbnail.TabIndex = 0
+        Me.picThumbnail.TabStop = False
         '
         'lblVideoTitle
         '
@@ -211,58 +235,6 @@ Partial Class Form1
         Me.trkDuration.TabIndex = 5
         Me.trkDuration.TickStyle = System.Windows.Forms.TickStyle.None
         '
-        'pnlOverlay
-        '
-        Me.pnlOverlay.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
-            Or System.Windows.Forms.AnchorStyles.Left) _
-            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.pnlOverlay.Controls.Add(Me.lblLoading)
-        Me.pnlOverlay.Location = New System.Drawing.Point(169, 40)
-        Me.pnlOverlay.Name = "pnlOverlay"
-        Me.pnlOverlay.Size = New System.Drawing.Size(631, 306)
-        Me.pnlOverlay.TabIndex = 2
-        '
-        'tmrSettings
-        '
-        Me.tmrSettings.Enabled = True
-        '
-        'lblLoading
-        '
-        Me.lblLoading.BackColor = System.Drawing.Color.Transparent
-        Me.lblLoading.Dock = System.Windows.Forms.DockStyle.Fill
-        Me.lblLoading.Font = New System.Drawing.Font("Microsoft Sans Serif", 18.0!, CType((System.Drawing.FontStyle.Bold Or System.Drawing.FontStyle.Italic), System.Drawing.FontStyle), System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.lblLoading.ForeColor = System.Drawing.Color.White
-        Me.lblLoading.Image = Global.YoutubeMusic.My.Resources.Resources.loading2
-        Me.lblLoading.Location = New System.Drawing.Point(0, 0)
-        Me.lblLoading.Name = "lblLoading"
-        Me.lblLoading.Size = New System.Drawing.Size(631, 306)
-        Me.lblLoading.TabIndex = 1
-        Me.lblLoading.Text = "Loading. Please Wait."
-        Me.lblLoading.TextAlign = System.Drawing.ContentAlignment.BottomCenter
-        '
-        'picVolume
-        '
-        Me.picVolume.Image = CType(resources.GetObject("picVolume.Image"), System.Drawing.Image)
-        Me.picVolume.Location = New System.Drawing.Point(16, 40)
-        Me.picVolume.Name = "picVolume"
-        Me.picVolume.Size = New System.Drawing.Size(30, 30)
-        Me.picVolume.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage
-        Me.picVolume.TabIndex = 0
-        Me.picVolume.TabStop = False
-        '
-        'picThumbnail
-        '
-        Me.picThumbnail.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
-            Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
-        Me.picThumbnail.ErrorImage = Global.YoutubeMusic.My.Resources.Resources.No_Image
-        Me.picThumbnail.Image = Global.YoutubeMusic.My.Resources.Resources.No_Image
-        Me.picThumbnail.Location = New System.Drawing.Point(15, 11)
-        Me.picThumbnail.Name = "picThumbnail"
-        Me.picThumbnail.Size = New System.Drawing.Size(86, 86)
-        Me.picThumbnail.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage
-        Me.picThumbnail.TabIndex = 0
-        Me.picThumbnail.TabStop = False
-        '
         'picRepeat
         '
         Me.picRepeat.Anchor = System.Windows.Forms.AnchorStyles.None
@@ -318,6 +290,40 @@ Partial Class Form1
         Me.picShuffle.TabIndex = 0
         Me.picShuffle.TabStop = False
         '
+        'pnlOverlay
+        '
+        Me.pnlOverlay.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.pnlOverlay.Controls.Add(Me.lblLoading)
+        Me.pnlOverlay.Location = New System.Drawing.Point(169, 40)
+        Me.pnlOverlay.Name = "pnlOverlay"
+        Me.pnlOverlay.Size = New System.Drawing.Size(631, 306)
+        Me.pnlOverlay.TabIndex = 2
+        '
+        'lblLoading
+        '
+        Me.lblLoading.BackColor = System.Drawing.Color.Transparent
+        Me.lblLoading.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.lblLoading.Font = New System.Drawing.Font("Microsoft Sans Serif", 18.0!, CType((System.Drawing.FontStyle.Bold Or System.Drawing.FontStyle.Italic), System.Drawing.FontStyle), System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblLoading.ForeColor = System.Drawing.Color.White
+        Me.lblLoading.Image = Global.YoutubeMusic.My.Resources.Resources.loading2
+        Me.lblLoading.Location = New System.Drawing.Point(0, 0)
+        Me.lblLoading.Name = "lblLoading"
+        Me.lblLoading.Size = New System.Drawing.Size(631, 306)
+        Me.lblLoading.TabIndex = 1
+        Me.lblLoading.Text = "Loading. Please Wait."
+        Me.lblLoading.TextAlign = System.Drawing.ContentAlignment.BottomCenter
+        '
+        'tmrSettings
+        '
+        Me.tmrSettings.Enabled = True
+        '
+        'tmrUpdateDisp
+        '
+        Me.tmrUpdateDisp.Enabled = True
+        Me.tmrUpdateDisp.Interval = 1000
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -338,18 +344,18 @@ Partial Class Form1
         Me.pnlBottomBar.ResumeLayout(False)
         Me.pnlVolumeControl.ResumeLayout(False)
         CType(Me.trkVolume, System.ComponentModel.ISupportInitialize).EndInit()
+        CType(Me.picVolume, System.ComponentModel.ISupportInitialize).EndInit()
         Me.pnlVideoInfo.ResumeLayout(False)
+        CType(Me.picThumbnail, System.ComponentModel.ISupportInitialize).EndInit()
         Me.pnlMediaControls.ResumeLayout(False)
         Me.pnlMediaControls.PerformLayout()
         CType(Me.trkDuration, System.ComponentModel.ISupportInitialize).EndInit()
-        Me.pnlOverlay.ResumeLayout(False)
-        CType(Me.picVolume, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.picThumbnail, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.picRepeat, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.picNext, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.picPausePlay, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.picPrev, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.picShuffle, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.pnlOverlay.ResumeLayout(False)
         Me.ResumeLayout(False)
 
     End Sub
@@ -377,4 +383,5 @@ Partial Class Form1
     Friend WithEvents lblCurrentTime As Label
     Friend WithEvents trkDuration As TrackBar
     Friend WithEvents lblLoading As Label
+    Friend WithEvents tmrUpdateDisp As Timer
 End Class

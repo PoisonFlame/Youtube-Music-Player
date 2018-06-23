@@ -6,6 +6,17 @@ Imports Google.Apis.Discovery
 Imports Google.Apis.Services
 Imports Google.Apis.YouTube.v3
 Imports Newtonsoft.Json.Linq
+Imports System
+Imports System.Runtime.InteropServices
+Imports System.Collections.Generic
+Imports Windows.Media
+Imports Windows.Media.Core
+Imports Windows.Media.Playback
+Imports Windows.Storage
+Imports Windows.Storage.Streams
+Imports System.Runtime.InteropServices.WindowsRuntime
+Imports System.IO.WindowsRuntimeStreamExtensions
+
 Public Class Form1
     Private WithEvents browser As WinForms.ChromiumWebBrowser
     Dim isPlayerReady As Boolean = False
@@ -15,9 +26,13 @@ Public Class Form1
     Dim volume As Integer
     Dim prevVolume As Integer
     Dim hotkey As New HotKeyRegistryClass(Me.Handle)
+    Dim mPlayer As New MediaPlayer
+    Dim mControls As SystemMediaTransportControls = mPlayer.SystemMediaTransportControls
+    Dim dispUpdater As SystemMediaTransportControlsDisplayUpdater = mControls.DisplayUpdater
+    Dim timeProperties As SystemMediaTransportControlsTimelineProperties = New SystemMediaTransportControlsTimelineProperties()
+
     Public Sub New()
         InitializeComponent()
-
         Dim settings As New CefSettings()
         CefSharp.Cef.Initialize(settings)
 
@@ -29,6 +44,48 @@ Public Class Form1
         hotkey.Register(HotKeyRegistryClass.Modifiers.MOD_NONE, Keys.MediaPlayPause)
         hotkey.Register(HotKeyRegistryClass.Modifiers.MOD_NONE, Keys.MediaNextTrack)
         hotkey.Register(HotKeyRegistryClass.Modifiers.MOD_NONE, Keys.MediaPreviousTrack)
+
+        mPlayer.CommandManager.IsEnabled = False
+        mControls.IsChannelDownEnabled = False
+        mControls.IsChannelUpEnabled = False
+        mControls.IsFastForwardEnabled = False
+        mControls.IsNextEnabled = True
+        mControls.IsPauseEnabled = True
+        mControls.IsPlayEnabled = True
+        mControls.IsPreviousEnabled = True
+        mControls.IsRecordEnabled = False
+        mControls.IsRewindEnabled = False
+        mControls.IsStopEnabled = False
+
+        AddHandler mControls.ButtonPressed, AddressOf ControlsPressed
+
+        DefaultCard()
+
+    End Sub
+    Private Sub DefaultCard()
+        dispUpdater.Type = MediaPlaybackType.Music
+        dispUpdater.MusicProperties.Title = "Youtube Music Player"
+        dispUpdater.MusicProperties.AlbumArtist = "Rudra Sharma"
+        dispUpdater.Thumbnail = RandomAccessStreamReference.CreateFromUri(New Uri("https://rudrasharma.net/extraStuff/No_Image.png"))
+        mControls.PlaybackStatus = MediaPlaybackStatus.Stopped
+        dispUpdater.Update()
+        mControls.IsEnabled = True
+    End Sub
+    Private Sub ControlsPressed(sender As SystemMediaTransportControls, args As SystemMediaTransportControlsButtonPressedEventArgs)
+        Select Case args.Button
+            Case args.Button.Play
+                If Not state = "Playing" Then
+                    PausePlay()
+                End If
+            Case args.Button.Pause
+                If Not state = "Paused" Then
+                    PausePlay()
+                End If
+            Case args.Button.Next
+                NextTrack()
+            Case args.Button.Previous
+                PrevTrack()
+        End Select
     End Sub
     Protected Overrides Sub WndProc(ByRef m As System.Windows.Forms.Message)
         If m.Msg = HotKeyRegistryClass.Messages.WM_HOTKEY Then
@@ -38,6 +95,7 @@ Public Class Form1
                     PausePlay()
                 Case 1
                     NextTrack()
+
                 Case 2
                     PrevTrack()
                 Case Else
@@ -112,14 +170,23 @@ Public Class Form1
     Function getState(state As String) As String
         Dim st As Integer = CInt(state)
         If st = -1 Then
+            DefaultCard()
+            mControls.PlaybackStatus = MediaPlaybackStatus.Stopped
             Return "Unstarted"
         ElseIf st = 0 Then
+            mControls.PlaybackStatus = MediaPlaybackStatus.Closed
+            DefaultCard()
             Return "Ended"
         ElseIf st = 1 Then
+            mControls.IsEnabled = True
+            mControls.PlaybackStatus = MediaPlaybackStatus.Playing
             Return "Playing"
         ElseIf st = 2 Then
+            mControls.IsEnabled = True
+            mControls.PlaybackStatus = MediaPlaybackStatus.Paused
             Return "Paused"
         ElseIf st = 3 Then
+            mControls.PlaybackStatus = MediaPlaybackStatus.Changing
             Return "Buffering"
         ElseIf st = 5 Then
             Return "Video Cued"
@@ -154,6 +221,7 @@ Public Class Form1
             trkDuration.Maximum = CInt(duration)
             lblCurrentTime.Text = convertSecondsToTime(currentTime)
             trkDuration.Value = Double.Parse(currentTime)
+
         End If
 
         If state = "Playing" Then
@@ -200,6 +268,16 @@ Public Class Form1
         End If
     End Function
 
+    Private Sub tmrUpdate_Tick(sender As Object, e As EventArgs) Handles tmrUpdateDisp.Tick
+        If isPlayerReady And songChanged Then
+            dispUpdater.Type = MediaPlaybackType.Music
+            dispUpdater.MusicProperties.Title = title
+            dispUpdater.MusicProperties.AlbumArtist = "Youtube"
+            dispUpdater.Thumbnail = RandomAccessStreamReference.CreateFromUri(New Uri("https://img.youtube.com/vi/" + videoID + "/hqdefault.jpg"))
+            dispUpdater.Update()
+        End If
+    End Sub
+
     Private Sub trkVolume_ValueChanged(sender As Object, e As EventArgs) Handles trkVolume.ValueChanged
         If isPlayerReady = True Then
             browser.ExecuteScriptAsync("setVolume(" + trkVolume.Value.ToString + ");")
@@ -214,5 +292,7 @@ Public Class Form1
     Private Sub Form1_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
         'RemoveGlobalHotkeySupport()
         hotkey.Unregister(0)
+        hotkey.Unregister(1)
+        hotkey.Unregister(2)
     End Sub
 End Class
