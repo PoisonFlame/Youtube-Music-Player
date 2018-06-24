@@ -26,8 +26,11 @@ Partial Class Form1
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Form1))
         Me.pnlBrowser = New System.Windows.Forms.Panel()
         Me.pnlNavigation = New System.Windows.Forms.Panel()
+        Me.pnlNavBar = New System.Windows.Forms.Panel()
+        Me.lblNavHome = New System.Windows.Forms.Label()
         Me.lblSettings = New System.Windows.Forms.Label()
         Me.pnlTopBar = New System.Windows.Forms.Panel()
+        Me.lblGoogleLogin = New System.Windows.Forms.Label()
         Me.pnlBottomBar = New System.Windows.Forms.Panel()
         Me.pnlVolumeControl = New System.Windows.Forms.Panel()
         Me.trkVolume = New System.Windows.Forms.TrackBar()
@@ -48,7 +51,10 @@ Partial Class Form1
         Me.lblLoading = New System.Windows.Forms.Label()
         Me.tmrSettings = New System.Windows.Forms.Timer(Me.components)
         Me.tmrUpdateDisp = New System.Windows.Forms.Timer(Me.components)
+        Me.lstPlaylists = New System.Windows.Forms.ListBox()
         Me.pnlNavigation.SuspendLayout()
+        Me.pnlNavBar.SuspendLayout()
+        Me.pnlTopBar.SuspendLayout()
         Me.pnlBottomBar.SuspendLayout()
         Me.pnlVolumeControl.SuspendLayout()
         CType(Me.trkVolume, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -81,31 +87,67 @@ Partial Class Form1
         Me.pnlNavigation.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
             Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
         Me.pnlNavigation.BackColor = System.Drawing.Color.FromArgb(CType(CType(45, Byte), Integer), CType(CType(45, Byte), Integer), CType(CType(45, Byte), Integer))
+        Me.pnlNavigation.Controls.Add(Me.pnlNavBar)
         Me.pnlNavigation.Controls.Add(Me.lblSettings)
         Me.pnlNavigation.Location = New System.Drawing.Point(0, 40)
         Me.pnlNavigation.Name = "pnlNavigation"
         Me.pnlNavigation.Size = New System.Drawing.Size(169, 306)
         Me.pnlNavigation.TabIndex = 1
         '
+        'pnlNavBar
+        '
+        Me.pnlNavBar.Controls.Add(Me.lstPlaylists)
+        Me.pnlNavBar.Controls.Add(Me.lblNavHome)
+        Me.pnlNavBar.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.pnlNavBar.Location = New System.Drawing.Point(0, 33)
+        Me.pnlNavBar.Name = "pnlNavBar"
+        Me.pnlNavBar.Size = New System.Drawing.Size(169, 273)
+        Me.pnlNavBar.TabIndex = 2
+        '
+        'lblNavHome
+        '
+        Me.lblNavHome.Font = New System.Drawing.Font("Microsoft Sans Serif", 15.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblNavHome.ForeColor = System.Drawing.Color.FromArgb(CType(CType(224, Byte), Integer), CType(CType(224, Byte), Integer), CType(CType(224, Byte), Integer))
+        Me.lblNavHome.Location = New System.Drawing.Point(1, 4)
+        Me.lblNavHome.Name = "lblNavHome"
+        Me.lblNavHome.Size = New System.Drawing.Size(163, 23)
+        Me.lblNavHome.TabIndex = 1
+        Me.lblNavHome.Text = "Home"
+        Me.lblNavHome.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        '
         'lblSettings
         '
-        Me.lblSettings.AutoSize = True
+        Me.lblSettings.Dock = System.Windows.Forms.DockStyle.Top
         Me.lblSettings.Font = New System.Drawing.Font("Microsoft Sans Serif", 21.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.lblSettings.ForeColor = System.Drawing.Color.White
-        Me.lblSettings.Location = New System.Drawing.Point(12, 9)
+        Me.lblSettings.Location = New System.Drawing.Point(0, 0)
         Me.lblSettings.Name = "lblSettings"
-        Me.lblSettings.Size = New System.Drawing.Size(128, 33)
+        Me.lblSettings.Size = New System.Drawing.Size(169, 33)
         Me.lblSettings.TabIndex = 0
         Me.lblSettings.Text = "Settings"
+        Me.lblSettings.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
         '
         'pnlTopBar
         '
         Me.pnlTopBar.BackColor = System.Drawing.Color.FromArgb(CType(CType(36, Byte), Integer), CType(CType(36, Byte), Integer), CType(CType(36, Byte), Integer))
+        Me.pnlTopBar.Controls.Add(Me.lblGoogleLogin)
         Me.pnlTopBar.Dock = System.Windows.Forms.DockStyle.Top
         Me.pnlTopBar.Location = New System.Drawing.Point(0, 0)
         Me.pnlTopBar.Name = "pnlTopBar"
         Me.pnlTopBar.Size = New System.Drawing.Size(800, 40)
         Me.pnlTopBar.TabIndex = 0
+        '
+        'lblGoogleLogin
+        '
+        Me.lblGoogleLogin.Dock = System.Windows.Forms.DockStyle.Right
+        Me.lblGoogleLogin.Font = New System.Drawing.Font("Microsoft Sans Serif", 14.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblGoogleLogin.ForeColor = System.Drawing.Color.White
+        Me.lblGoogleLogin.Location = New System.Drawing.Point(453, 0)
+        Me.lblGoogleLogin.Name = "lblGoogleLogin"
+        Me.lblGoogleLogin.Size = New System.Drawing.Size(347, 40)
+        Me.lblGoogleLogin.TabIndex = 2
+        Me.lblGoogleLogin.Text = "Login"
+        Me.lblGoogleLogin.TextAlign = System.Drawing.ContentAlignment.MiddleRight
         '
         'pnlBottomBar
         '
@@ -321,8 +363,15 @@ Partial Class Form1
         '
         'tmrUpdateDisp
         '
-        Me.tmrUpdateDisp.Enabled = True
         Me.tmrUpdateDisp.Interval = 1000
+        '
+        'lstPlaylists
+        '
+        Me.lstPlaylists.FormattingEnabled = True
+        Me.lstPlaylists.Location = New System.Drawing.Point(3, 30)
+        Me.lstPlaylists.Name = "lstPlaylists"
+        Me.lstPlaylists.Size = New System.Drawing.Size(160, 225)
+        Me.lstPlaylists.TabIndex = 2
         '
         'Form1
         '
@@ -340,7 +389,8 @@ Partial Class Form1
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Youtube Music Player"
         Me.pnlNavigation.ResumeLayout(False)
-        Me.pnlNavigation.PerformLayout()
+        Me.pnlNavBar.ResumeLayout(False)
+        Me.pnlTopBar.ResumeLayout(False)
         Me.pnlBottomBar.ResumeLayout(False)
         Me.pnlVolumeControl.ResumeLayout(False)
         CType(Me.trkVolume, System.ComponentModel.ISupportInitialize).EndInit()
@@ -384,4 +434,8 @@ Partial Class Form1
     Friend WithEvents trkDuration As TrackBar
     Friend WithEvents lblLoading As Label
     Friend WithEvents tmrUpdateDisp As Timer
+    Friend WithEvents pnlNavBar As Panel
+    Friend WithEvents lblNavHome As Label
+    Friend WithEvents lblGoogleLogin As Label
+    Friend WithEvents lstPlaylists As ListBox
 End Class

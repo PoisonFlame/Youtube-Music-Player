@@ -16,6 +16,9 @@ Imports Windows.Storage
 Imports Windows.Storage.Streams
 Imports System.Runtime.InteropServices.WindowsRuntime
 Imports System.IO.WindowsRuntimeStreamExtensions
+Imports Google.Apis.Auth.OAuth2
+Imports System.Threading
+Imports Google.Apis.YouTube
 
 Public Class Form1
     Private WithEvents browser As WinForms.ChromiumWebBrowser
@@ -30,17 +33,26 @@ Public Class Form1
     Dim mControls As SystemMediaTransportControls = mPlayer.SystemMediaTransportControls
     Dim dispUpdater As SystemMediaTransportControlsDisplayUpdater = mControls.DisplayUpdater
     Dim timeProperties As SystemMediaTransportControlsTimelineProperties = New SystemMediaTransportControlsTimelineProperties()
+    Dim hiddenPath As String = Path.GetFullPath(Path.Combine(My.Computer.FileSystem.CurrentDirectory.ToString, "..\..\..\")) + "HiddenContent\"
+    Dim apiKey As String = My.Computer.FileSystem.ReadAllText(hiddenPath + "key_api.txt")
+    Dim oauthClientID As String = My.Computer.FileSystem.ReadAllText(hiddenPath + "oauth_client.txt")
+    Dim clientSecret As String = My.Computer.FileSystem.ReadAllText(hiddenPath + "client_secret.txt")
+    Dim credentials As UserCredential
+    Dim youtubeService As YouTubeService
+    Dim playListIDs As ArrayList = New ArrayList
+    Dim currentURL As String
 
     Public Sub New()
         InitializeComponent()
         Dim settings As New CefSettings()
         CefSharp.Cef.Initialize(settings)
 
-        browser = New WinForms.ChromiumWebBrowser("https://rudrasharma.net/extraStuff/yt.php")
-        'browser = New WinForms.ChromiumWebBrowser("https://rudrasharma.net/extraStuff/welcome.php")
+        'browser = New WinForms.ChromiumWebBrowser("https://rudrasharma.net/extraStuff/yt.php")
+        browser = New WinForms.ChromiumWebBrowser("https://rudrasharma.net/extraStuff/welcome.php")
         pnlBrowser.Controls.Add(browser)
         browser.Enabled = False
         AddHandler browser.LoadingStateChanged, AddressOf OnLoadingStateChanged
+        AddHandler browser.AddressChanged, AddressOf SiteURLChanged
         hotkey.Register(HotKeyRegistryClass.Modifiers.MOD_NONE, Keys.MediaPlayPause)
         hotkey.Register(HotKeyRegistryClass.Modifiers.MOD_NONE, Keys.MediaNextTrack)
         hotkey.Register(HotKeyRegistryClass.Modifiers.MOD_NONE, Keys.MediaPreviousTrack)
@@ -60,8 +72,8 @@ Public Class Form1
         AddHandler mControls.ButtonPressed, AddressOf ControlsPressed
 
         DefaultCard()
-
     End Sub
+
     Private Sub DefaultCard()
         dispUpdater.Type = MediaPlaybackType.Music
         dispUpdater.MusicProperties.Title = "Youtube Music Player"
@@ -70,6 +82,9 @@ Public Class Form1
         mControls.PlaybackStatus = MediaPlaybackStatus.Stopped
         dispUpdater.Update()
         mControls.IsEnabled = True
+    End Sub
+    Private Sub SiteURLChanged(sender As Object, args As AddressChangedEventArgs)
+        currentURL = args.Address
     End Sub
     Private Sub ControlsPressed(sender As SystemMediaTransportControls, args As SystemMediaTransportControlsButtonPressedEventArgs)
         Select Case args.Button
@@ -251,8 +266,37 @@ Public Class Form1
         End If
     End Sub
 
-    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+    Private Async Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        If My.Settings.accessToken IsNot Nothing Then
+            Dim cltSecrets As New ClientSecrets
+            cltSecrets.ClientId = oauthClientID
+            cltSecrets.ClientSecret = clientSecret
+            credentials = Await GoogleWebAuthorizationBroker.AuthorizeAsync(cltSecrets, {YouTubeService.Scope.Youtube, YouTubeService.Scope.YoutubeReadonly}, "user", CancellationToken.None)
 
+            Dim bcs = New BaseClientService.Initializer()
+            bcs.HttpClientInitializer = credentials
+            bcs.ApplicationName = "Youtube Music Player"
+            youtubeService = New YouTubeService(bcs)
+            Dim channelInfoService = youtubeService.Channels.List("snippet")
+            channelInfoService.Mine = True
+            Dim channelListResponse = Await channelInfoService.ExecuteAsync()
+            lblGoogleLogin.Text = "Welcome, " + channelListResponse.Items(0).Snippet.Title
+
+            Dim playlistInfoService = youtubeService.Playlists.List("id,snippet")
+            playlistInfoService.Mine = True
+            playlistInfoService.MaxResults = 50
+            Dim playlistResponse = Await playlistInfoService.ExecuteAsync()
+            Dim strd As String = ""
+            For i As Integer = 0 To playlistResponse.Items.Count - 1
+                'MsgBox(playlistResponse.Items(i).Snippet.Title)
+                lstPlaylists.Items.Add(playlistResponse.Items(i).Snippet.Title)
+                playListIDs.Add(playlistResponse.Items(i).Id)
+            Next
+
+
+
+
+        End If
     End Sub
 
     Function convertSecondsToTime(seconds As String) As String
@@ -278,11 +322,51 @@ Public Class Form1
         End If
     End Sub
 
+    Private Async Sub lblGoogleLogin_Click(sender As Object, e As EventArgs) Handles lblGoogleLogin.Click
+        If lblGoogleLogin.Text = "Login" Then
+            Dim cltSecrets As New ClientSecrets
+            cltSecrets.ClientId = oauthClientID
+            cltSecrets.ClientSecret = clientSecret
+            credentials = Await GoogleWebAuthorizationBroker.AuthorizeAsync(cltSecrets, {YouTubeService.Scope.Youtube, YouTubeService.Scope.YoutubeReadonly}, "user", CancellationToken.None)
+            My.Settings.accessToken = credentials.Token.AccessToken.ToString
+            My.Settings.Save()
+        End If
+    End Sub
+    Private Sub serv()
+        'Dim bcs = New BaseClientService.Initializer()
+        'bcs.HttpClientInitializer = credentials
+        'bcs.ApplicationName = "Youtube Music Player"
+        'v3.ChannelsResource.
+        'Dim service As YouTubeService = New YouTubeService(New BaseClientService.Initializer())
+    End Sub
+
+    Private Sub lblGoogleLogin_MouseHover(sender As Object, e As EventArgs) Handles lblGoogleLogin.MouseHover
+        lblGoogleLogin.ForeColor = Color.Silver
+    End Sub
+
     Private Sub trkVolume_ValueChanged(sender As Object, e As EventArgs) Handles trkVolume.ValueChanged
         If isPlayerReady = True Then
             browser.ExecuteScriptAsync("setVolume(" + trkVolume.Value.ToString + ");")
         End If
     End Sub
+
+    Private Sub pnlTopBar_Paint(sender As Object, e As PaintEventArgs) Handles pnlTopBar.Paint
+
+    End Sub
+
+    Private Sub lstPlaylists_SelectedIndexChanged(sender As Object, e As EventArgs) Handles lstPlaylists.SelectedIndexChanged
+        If Not currentURL = "https://rudrasharma.net/extraStuff/yt.php" Then
+            browser.Load("https://rudrasharma.net/extraStuff/yt.php")
+            browser.ExecuteScriptAsync("loadPlaylistID('" + playListIDs(lstPlaylists.SelectedIndex) + "')")
+        Else
+            browser.ExecuteScriptAsync("loadPlaylistID('" + playListIDs(lstPlaylists.SelectedIndex) + "')")
+        End If
+    End Sub
+
+    Private Sub lblSettings_Click(sender As Object, e As EventArgs) Handles lblSettings.Click
+
+    End Sub
+
     Private Sub trkDuration_Scroll(sender As Object, e As EventArgs) Handles trkDuration.Scroll
         If isPlayerReady = True Then
             browser.ExecuteScriptAsync("seekTo(" + trkDuration.Value.ToString + ")")
@@ -290,9 +374,12 @@ Public Class Form1
     End Sub
 
     Private Sub Form1_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
-        'RemoveGlobalHotkeySupport()
         hotkey.Unregister(0)
         hotkey.Unregister(1)
         hotkey.Unregister(2)
+    End Sub
+
+    Private Sub lblGoogleLogin_MouseLeave(sender As Object, e As EventArgs) Handles lblGoogleLogin.MouseLeave
+        lblGoogleLogin.ForeColor = Color.White
     End Sub
 End Class
