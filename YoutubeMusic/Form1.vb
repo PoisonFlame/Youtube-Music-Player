@@ -23,7 +23,7 @@ Imports Google.Apis.YouTube
 Public Class Form1
     Private WithEvents browser As WinForms.ChromiumWebBrowser
     Dim isPlayerReady As Boolean = False
-    Dim songChanged As Boolean = True
+    Dim songPlayed As Boolean = False
     Dim videoID As String = "null"
     Dim currentTime, duration, title, state As String
     Dim volume As Integer
@@ -41,13 +41,14 @@ Public Class Form1
     Dim youtubeService As YouTubeService
     Dim playListIDs As ArrayList = New ArrayList
     Dim currentURL As String
+    Dim currentlySelectedPlaylist As String = "Youtube"
+    Dim userSettingDropDown As MyComboBox
 
     Public Sub New()
         InitializeComponent()
         Dim settings As New CefSettings()
         CefSharp.Cef.Initialize(settings)
 
-        'browser = New WinForms.ChromiumWebBrowser("https://rudrasharma.net/extraStuff/yt.php")
         browser = New WinForms.ChromiumWebBrowser("https://rudrasharma.net/extraStuff/welcome.php")
         pnlBrowser.Controls.Add(browser)
         browser.Enabled = False
@@ -71,9 +72,85 @@ Public Class Form1
 
         AddHandler mControls.ButtonPressed, AddressOf ControlsPressed
 
+        userSettingDropDown = New MyComboBox(Me.Location.X + Me.Width)
+        userSettingDropDown.Bounds = New Rectangle(10, 10, 17, 10)
+        userSettingDropDown.DropDownWidth = 150
+        userSettingDropDown.Height = 39
+        userSettingDropDown.Width = 18
+        userSettingDropDown.Dock = DockStyle.Right
+        userSettingDropDown.Font = New Drawing.Font("Calibri", 20, FontStyle.Italic)
+        userSettingDropDown.BackColor = Color.FromArgb(36, 36, 36)
+        userSettingDropDown.ForeColor = Color.White
+        pnlUserSettings.Controls.Add(userSettingDropDown)
+        AddHandler userSettingDropDown.SelectedIndexChanged, AddressOf userSettingDropDown_SelectedIndexChanged
+
         DefaultCard()
     End Sub
+    Private Async Sub userSettingDropDown_SelectedIndexChanged()
+        Dim ind As Integer = userSettingDropDown.SelectedIndex
+        Dim item As String = userSettingDropDown.Items.Item(ind).ToString
 
+        If item = "Login" Then
+            ' Login Crap
+            Dim cltSecrets As New ClientSecrets
+            cltSecrets.ClientId = oauthClientID
+            cltSecrets.ClientSecret = clientSecret
+            credentials = Await GoogleWebAuthorizationBroker.AuthorizeAsync(cltSecrets, {YouTubeService.Scope.Youtube, YouTubeService.Scope.YoutubeReadonly}, "user", CancellationToken.None)
+            My.Settings.accessToken = credentials.Token.AccessToken.ToString
+            My.Settings.Save()
+
+
+            Dim bcs = New BaseClientService.Initializer()
+            bcs.HttpClientInitializer = credentials
+            bcs.ApplicationName = "Youtube Music Player"
+            youtubeService = New YouTubeService(bcs)
+            Dim channelInfoService = youtubeService.Channels.List("snippet")
+            channelInfoService.Mine = True
+            Dim channelListResponse = Await channelInfoService.ExecuteAsync()
+            lblGoogleLogin.Text = "Welcome, " + channelListResponse.Items(0).Snippet.Title
+
+            Dim playlistInfoService = youtubeService.Playlists.List("id,snippet")
+            playlistInfoService.Mine = True
+            playlistInfoService.MaxResults = 50
+            Dim playlistResponse = Await playlistInfoService.ExecuteAsync()
+            Dim strd As String = ""
+            playListIDs.Clear()
+            lstPlaylists.Items.Clear()
+            lstPlaylists.Items.Add("Home")
+            lstPlaylists.Items.Add("Browse")
+            lstPlaylists.Items.Add("YOUR LIBRARY")
+
+            For i As Integer = 0 To playlistResponse.Items.Count - 1
+                lstPlaylists.Items.Add(playlistResponse.Items(i).Snippet.Title)
+                playListIDs.Add(playlistResponse.Items(i).Id)
+            Next
+            userSettingDropDown.Items.Clear()
+            userSettingDropDown.Items.Add("Logout")
+        ElseIf item = "Logout" Then
+            'Logout Crap
+            Await credentials.RevokeTokenAsync(CancellationToken.None)
+            My.Settings.accessToken = "null"
+            My.Settings.Save()
+            lblGoogleLogin.Text = "Not Logged In"
+            userSettingDropDown.Items.Clear()
+            userSettingDropDown.Items.Add("Login")
+            playListIDs.Clear()
+            lstPlaylists.Items.Clear()
+            lstPlaylists.Items.Add("No Info Available")
+            lstPlaylists.Items.Add("Login to See Playlists")
+        Else
+
+        End If
+    End Sub
+    Private Sub AddUserSettings()
+        If lblGoogleLogin.Text = "Not Logged In" Then
+            userSettingDropDown.Items.Add("Login")
+            lstPlaylists.Items.Add("No Info Available")
+            lstPlaylists.Items.Add("Login to See Playlists")
+        Else
+            userSettingDropDown.Items.Add("Logout")
+        End If
+    End Sub
     Private Sub DefaultCard()
         dispUpdater.Type = MediaPlaybackType.Music
         dispUpdater.MusicProperties.Title = "Youtube Music Player"
@@ -88,17 +165,17 @@ Public Class Form1
     End Sub
     Private Sub ControlsPressed(sender As SystemMediaTransportControls, args As SystemMediaTransportControlsButtonPressedEventArgs)
         Select Case args.Button
-            Case args.Button.Play
+            Case 0 'args.Button.Play
                 If Not state = "Playing" Then
                     PausePlay()
                 End If
-            Case args.Button.Pause
+            Case 1 'args.Button.Pause
                 If Not state = "Paused" Then
                     PausePlay()
                 End If
-            Case args.Button.Next
+            Case 6 'args.Button.Next
                 NextTrack()
-            Case args.Button.Previous
+            Case 7 'args.Button.Previous
                 PrevTrack()
         End Select
     End Sub
@@ -106,12 +183,12 @@ Public Class Form1
         If m.Msg = HotKeyRegistryClass.Messages.WM_HOTKEY Then
             Dim ID As String = m.WParam.ToString()
             Select Case ID
-                Case 0
+                Case "0"
                     PausePlay()
-                Case 1
+                Case "1"
                     NextTrack()
 
-                Case 2
+                Case "2"
                     PrevTrack()
                 Case Else
 
@@ -173,10 +250,6 @@ Public Class Form1
         End If
     End Sub
 
-    Private Sub Button1_Click_1(sender As Object, e As EventArgs)
-        'browser.ExecuteScriptAsync("loadPlaylistID('" + TextBox1.Text + "')")
-    End Sub
-
     Private Sub Form1_SizeChanged(sender As Object, e As EventArgs) Handles Me.SizeChanged
         If isPlayerReady = True Then
             browser.ExecuteScriptAsync("changeDimensions(" + pnlBrowser.Width.ToString + "," + pnlBrowser.Height.ToString + ")")
@@ -211,7 +284,7 @@ Public Class Form1
         If isPlayerReady = True Then
             removeOverlay()
 
-            If songChanged Then
+            If songPlayed Then
                 browser.EvaluateScriptAsync("getVideoData();").ContinueWith(Function(x)
                                                                                 Dim response = x.Result
 
@@ -227,15 +300,16 @@ Public Class Form1
             End If
 
         End If
-        If Not videoID = "null" And songChanged Then
+        If Not videoID = "null" And songPlayed Then
             Dim clt As WebClient = New WebClient
-            Dim img As Bitmap = Bitmap.FromStream(New MemoryStream(clt.DownloadData("https://img.youtube.com/vi/" + videoID + "/hqdefault.jpg")))
+            Dim img As Bitmap = CType(Bitmap.FromStream(New MemoryStream(clt.DownloadData("https://img.youtube.com/vi/" + videoID + "/hqdefault.jpg")), Bitmap)
             picThumbnail.Image = img
             lblVideoTitle.Text = title
             lblDuration.Text = convertSecondsToTime(duration)
             trkDuration.Maximum = CInt(duration)
             lblCurrentTime.Text = convertSecondsToTime(currentTime)
-            trkDuration.Value = Double.Parse(currentTime)
+            trkDuration.Value = CInt(Double.Parse(currentTime))
+            tmrUpdateDisp.Start()
 
         End If
 
@@ -255,7 +329,7 @@ Public Class Form1
 
 
         trkVolume.Value = CInt(volume)
-
+        userSettingDropDown.UpdateWidth(Me.Location.X + Me.Width)
     End Sub
 
     Private Sub pnlBrowser_Click(sender As Object, e As EventArgs) Handles pnlBrowser.Click
@@ -267,11 +341,15 @@ Public Class Form1
     End Sub
 
     Private Async Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        If My.Settings.accessToken IsNot Nothing Then
+
+        If Not My.Settings.accessToken = "null" Then
             Dim cltSecrets As New ClientSecrets
             cltSecrets.ClientId = oauthClientID
             cltSecrets.ClientSecret = clientSecret
+            cmbUserSettings.Items.Add("Logout")
             credentials = Await GoogleWebAuthorizationBroker.AuthorizeAsync(cltSecrets, {YouTubeService.Scope.Youtube, YouTubeService.Scope.YoutubeReadonly}, "user", CancellationToken.None)
+
+
 
             Dim bcs = New BaseClientService.Initializer()
             bcs.HttpClientInitializer = credentials
@@ -280,6 +358,7 @@ Public Class Form1
             Dim channelInfoService = youtubeService.Channels.List("snippet")
             channelInfoService.Mine = True
             Dim channelListResponse = Await channelInfoService.ExecuteAsync()
+
             lblGoogleLogin.Text = "Welcome, " + channelListResponse.Items(0).Snippet.Title
 
             Dim playlistInfoService = youtubeService.Playlists.List("id,snippet")
@@ -288,15 +367,17 @@ Public Class Form1
             Dim playlistResponse = Await playlistInfoService.ExecuteAsync()
             Dim strd As String = ""
             For i As Integer = 0 To playlistResponse.Items.Count - 1
-                'MsgBox(playlistResponse.Items(i).Snippet.Title)
                 lstPlaylists.Items.Add(playlistResponse.Items(i).Snippet.Title)
                 playListIDs.Add(playlistResponse.Items(i).Id)
             Next
 
 
 
-
+        Else
         End If
+
+        AddUserSettings()
+
     End Sub
 
     Function convertSecondsToTime(seconds As String) As String
@@ -313,31 +394,13 @@ Public Class Form1
     End Function
 
     Private Sub tmrUpdate_Tick(sender As Object, e As EventArgs) Handles tmrUpdateDisp.Tick
-        If isPlayerReady And songChanged Then
+        If isPlayerReady And songPlayed Then
             dispUpdater.Type = MediaPlaybackType.Music
             dispUpdater.MusicProperties.Title = title
-            dispUpdater.MusicProperties.AlbumArtist = "Youtube"
+            dispUpdater.MusicProperties.AlbumArtist = currentlySelectedPlaylist
             dispUpdater.Thumbnail = RandomAccessStreamReference.CreateFromUri(New Uri("https://img.youtube.com/vi/" + videoID + "/hqdefault.jpg"))
             dispUpdater.Update()
         End If
-    End Sub
-
-    Private Async Sub lblGoogleLogin_Click(sender As Object, e As EventArgs) Handles lblGoogleLogin.Click
-        If lblGoogleLogin.Text = "Login" Then
-            Dim cltSecrets As New ClientSecrets
-            cltSecrets.ClientId = oauthClientID
-            cltSecrets.ClientSecret = clientSecret
-            credentials = Await GoogleWebAuthorizationBroker.AuthorizeAsync(cltSecrets, {YouTubeService.Scope.Youtube, YouTubeService.Scope.YoutubeReadonly}, "user", CancellationToken.None)
-            My.Settings.accessToken = credentials.Token.AccessToken.ToString
-            My.Settings.Save()
-        End If
-    End Sub
-    Private Sub serv()
-        'Dim bcs = New BaseClientService.Initializer()
-        'bcs.HttpClientInitializer = credentials
-        'bcs.ApplicationName = "Youtube Music Player"
-        'v3.ChannelsResource.
-        'Dim service As YouTubeService = New YouTubeService(New BaseClientService.Initializer())
     End Sub
 
     Private Sub lblGoogleLogin_MouseHover(sender As Object, e As EventArgs) Handles lblGoogleLogin.MouseHover
@@ -355,15 +418,35 @@ Public Class Form1
     End Sub
 
     Private Sub lstPlaylists_SelectedIndexChanged(sender As Object, e As EventArgs) Handles lstPlaylists.SelectedIndexChanged
-        If Not currentURL = "https://rudrasharma.net/extraStuff/yt.php" Then
-            browser.Load("https://rudrasharma.net/extraStuff/yt.php")
-            browser.ExecuteScriptAsync("loadPlaylistID('" + playListIDs(lstPlaylists.SelectedIndex) + "')")
-        Else
-            browser.ExecuteScriptAsync("loadPlaylistID('" + playListIDs(lstPlaylists.SelectedIndex) + "')")
+
+
+        If lstPlaylists.SelectedIndex > 2 Then
+            songPlayed = True
+            If Not currentURL = "https://rudrasharma.net/extraStuff/yt.php" Then
+                browser.Load("https://rudrasharma.net/extraStuff/yt.php?v=" + playListIDs(lstPlaylists.SelectedIndex - 3).ToString)
+
+            Else
+                browser.ExecuteScriptAsync("loadPlaylistID('" + playListIDs(lstPlaylists.SelectedIndex - 3).ToString + "')")
+
+            End If
+
+            currentlySelectedPlaylist = lstPlaylists.SelectedItem.ToString
         End If
+
     End Sub
 
-    Private Sub lblSettings_Click(sender As Object, e As EventArgs) Handles lblSettings.Click
+    Private Sub lblSettings_Click(sender As Object, e As EventArgs)
+
+    End Sub
+
+    Private Sub lstPlaylists_MeasureItem(sender As Object, e As MeasureItemEventArgs) Handles lstPlaylists.MeasureItem
+        If e.Index = 1 Then
+            e.ItemHeight = 53
+        ElseIf e.Index = 2 Then
+            e.ItemHeight = 24
+        Else
+            e.ItemHeight = 30
+        End If
 
     End Sub
 
@@ -381,5 +464,51 @@ Public Class Form1
 
     Private Sub lblGoogleLogin_MouseLeave(sender As Object, e As EventArgs) Handles lblGoogleLogin.MouseLeave
         lblGoogleLogin.ForeColor = Color.White
+    End Sub
+
+    Private Sub lstPlaylists_DrawItem(sender As Object, e As DrawItemEventArgs) Handles lstPlaylists.DrawItem
+        Dim brush As Brush
+        brush = New Drawing.SolidBrush(Color.FromArgb(12, 12, 12))
+        If (e.State And DrawItemState.Selected) = DrawItemState.Selected Then
+            e.Graphics.FillRectangle(brush, e.Bounds)
+        Else
+            e.Graphics.FillRectangle(brush, e.Bounds)
+        End If
+
+
+        Dim secondBrush As Brush = New Drawing.SolidBrush(Color.FromArgb(127, 127, 127))
+        Dim f123 As Font = New Drawing.Font("Times New Roman", 9, FontStyle.Bold)
+        If e.Index = 2 Then
+            Try
+                e.Graphics.DrawString(lstPlaylists.Items(e.Index), f123,
+            secondBrush, e.Bounds.X, e.Bounds.Y)
+            Catch ex As Exception
+
+            End Try
+
+        Else
+            Try
+                e.Graphics.DrawString(lstPlaylists.Items(e.Index), lstPlaylists.Font,
+            secondBrush, e.Bounds.X, e.Bounds.Y)
+            Catch ex As Exception
+
+            End Try
+        End If
+
+        e.DrawFocusRectangle()
+    End Sub
+
+    Private Sub lstPlaylists_MouseMove(sender As Object, e As MouseEventArgs) Handles lstPlaylists.MouseMove
+        Dim ind As Integer = lstPlaylists.IndexFromPoint(e.X, e.Y)
+        If Not ind = 0 And Not ind = 1 And Not ind = 2 Then
+            lblPlaylistClear.Text = lstPlaylists.Items.Item(ind).ToString
+        Else
+            lblPlaylistClear.Text = ""
+        End If
+
+    End Sub
+
+    Private Sub lstPlaylists_MouseLeave(sender As Object, e As EventArgs) Handles lstPlaylists.MouseLeave
+        lblPlaylistClear.Text = ""
     End Sub
 End Class
