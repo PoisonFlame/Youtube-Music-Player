@@ -171,6 +171,7 @@
     <Compile Include="MyComboBox.vb">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="userSettingsDropdownOptions.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Form1.resx">

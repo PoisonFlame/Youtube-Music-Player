@@ -35,14 +35,14 @@ Public Class Form1
     Dim timeProperties As SystemMediaTransportControlsTimelineProperties = New SystemMediaTransportControlsTimelineProperties()
     Dim hiddenPath As String = Path.GetFullPath(Path.Combine(My.Computer.FileSystem.CurrentDirectory.ToString, "..\..\..\")) + "HiddenContent\"
     Dim apiKey As String = My.Computer.FileSystem.ReadAllText(hiddenPath + "key_api.txt")
-    Dim oauthClientID As String = My.Computer.FileSystem.ReadAllText(hiddenPath + "oauth_client.txt")
-    Dim clientSecret As String = My.Computer.FileSystem.ReadAllText(hiddenPath + "client_secret.txt")
-    Dim credentials As UserCredential
-    Dim youtubeService As YouTubeService
-    Dim playListIDs As ArrayList = New ArrayList
+    Public oauthClientID As String = My.Computer.FileSystem.ReadAllText(hiddenPath + "oauth_client.txt")
+    Public clientSecret As String = My.Computer.FileSystem.ReadAllText(hiddenPath + "client_secret.txt")
+    Public credentials As UserCredential
+    Public youtubeService As YouTubeService
+    Public playListIDs As ArrayList = New ArrayList
     Dim currentURL As String
     Dim currentlySelectedPlaylist As String = "Youtube"
-    Dim userSettingDropDown As MyComboBox
+    Public userSettingDropDown As MyComboBox
 
     Public Sub New()
         InitializeComponent()
@@ -86,61 +86,11 @@ Public Class Form1
 
         DefaultCard()
     End Sub
-    Private Async Sub userSettingDropDown_SelectedIndexChanged()
+    Private Sub userSettingDropDown_SelectedIndexChanged()
         Dim ind As Integer = userSettingDropDown.SelectedIndex
         Dim item As String = userSettingDropDown.Items.Item(ind).ToString
 
-        If item = "Login" Then
-            ' Login Crap
-            Dim cltSecrets As New ClientSecrets
-            cltSecrets.ClientId = oauthClientID
-            cltSecrets.ClientSecret = clientSecret
-            credentials = Await GoogleWebAuthorizationBroker.AuthorizeAsync(cltSecrets, {YouTubeService.Scope.Youtube, YouTubeService.Scope.YoutubeReadonly}, "user", CancellationToken.None)
-            My.Settings.accessToken = credentials.Token.AccessToken.ToString
-            My.Settings.Save()
-
-
-            Dim bcs = New BaseClientService.Initializer()
-            bcs.HttpClientInitializer = credentials
-            bcs.ApplicationName = "Youtube Music Player"
-            youtubeService = New YouTubeService(bcs)
-            Dim channelInfoService = youtubeService.Channels.List("snippet")
-            channelInfoService.Mine = True
-            Dim channelListResponse = Await channelInfoService.ExecuteAsync()
-            lblGoogleLogin.Text = "Welcome, " + channelListResponse.Items(0).Snippet.Title
-
-            Dim playlistInfoService = youtubeService.Playlists.List("id,snippet")
-            playlistInfoService.Mine = True
-            playlistInfoService.MaxResults = 50
-            Dim playlistResponse = Await playlistInfoService.ExecuteAsync()
-            Dim strd As String = ""
-            playListIDs.Clear()
-            lstPlaylists.Items.Clear()
-            lstPlaylists.Items.Add("Home")
-            lstPlaylists.Items.Add("Browse")
-            lstPlaylists.Items.Add("YOUR LIBRARY")
-
-            For i As Integer = 0 To playlistResponse.Items.Count - 1
-                lstPlaylists.Items.Add(playlistResponse.Items(i).Snippet.Title)
-                playListIDs.Add(playlistResponse.Items(i).Id)
-            Next
-            userSettingDropDown.Items.Clear()
-            userSettingDropDown.Items.Add("Logout")
-        ElseIf item = "Logout" Then
-            'Logout Crap
-            Await credentials.RevokeTokenAsync(CancellationToken.None)
-            My.Settings.accessToken = "null"
-            My.Settings.Save()
-            lblGoogleLogin.Text = "Not Logged In"
-            userSettingDropDown.Items.Clear()
-            userSettingDropDown.Items.Add("Login")
-            playListIDs.Clear()
-            lstPlaylists.Items.Clear()
-            lstPlaylists.Items.Add("No Info Available")
-            lstPlaylists.Items.Add("Login to See Playlists")
-        Else
-
-        End If
+        userSettingsDropdownOptions.Load(item)
     End Sub
     Private Sub AddUserSettings()
         If lblGoogleLogin.Text = "Not Logged In" Then
@@ -148,6 +98,13 @@ Public Class Form1
             lstPlaylists.Items.Add("No Info Available")
             lstPlaylists.Items.Add("Login to See Playlists")
         Else
+            If My.Settings.showVideo = True Then
+                userSettingDropDown.Items.Add("[E]Show Video")
+                userSettingDropDown.Items.Add("Hide Video")
+            Else
+                userSettingDropDown.Items.Add("Show Video")
+                userSettingDropDown.Items.Add("[E]Hide Video")
+            End If
             userSettingDropDown.Items.Add("Logout")
         End If
     End Sub
@@ -302,7 +259,7 @@ Public Class Form1
         End If
         If Not videoID = "null" And songPlayed Then
             Dim clt As WebClient = New WebClient
-            Dim img As Bitmap = CType(Bitmap.FromStream(New MemoryStream(clt.DownloadData("https://img.youtube.com/vi/" + videoID + "/hqdefault.jpg")), Bitmap)
+            Dim img As Bitmap = Bitmap.FromStream(New MemoryStream(clt.DownloadData("https://img.youtube.com/vi/" + videoID + "/hqdefault.jpg")))
             picThumbnail.Image = img
             lblVideoTitle.Text = title
             lblDuration.Text = convertSecondsToTime(duration)
@@ -341,6 +298,12 @@ Public Class Form1
     End Sub
 
     Private Async Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+
+        If My.Settings.showVideo = True Then
+            pnlBrowser.Visible = True
+        Else
+            pnlBrowser.Visible = False
+        End If
 
         If Not My.Settings.accessToken = "null" Then
             Dim cltSecrets As New ClientSecrets
@@ -413,21 +376,17 @@ Public Class Form1
         End If
     End Sub
 
-    Private Sub pnlTopBar_Paint(sender As Object, e As PaintEventArgs) Handles pnlTopBar.Paint
-
-    End Sub
-
     Private Sub lstPlaylists_SelectedIndexChanged(sender As Object, e As EventArgs) Handles lstPlaylists.SelectedIndexChanged
 
 
         If lstPlaylists.SelectedIndex > 2 Then
             songPlayed = True
-            If Not currentURL = "https://rudrasharma.net/extraStuff/yt.php" Then
+            If Not currentURL.Contains("https://rudrasharma.net/extraStuff/yt.php") Then
                 browser.Load("https://rudrasharma.net/extraStuff/yt.php?v=" + playListIDs(lstPlaylists.SelectedIndex - 3).ToString)
-
+                browser.ExecuteScriptAsync("changeDimensions(" + pnlBrowser.Width.ToString + "," + pnlBrowser.Height.ToString + ")")
             Else
                 browser.ExecuteScriptAsync("loadPlaylistID('" + playListIDs(lstPlaylists.SelectedIndex - 3).ToString + "')")
-
+                browser.ExecuteScriptAsync("changeDimensions(" + pnlBrowser.Width.ToString + "," + pnlBrowser.Height.ToString + ")")
             End If
 
             currentlySelectedPlaylist = lstPlaylists.SelectedItem.ToString
@@ -464,6 +423,11 @@ Public Class Form1
 
     Private Sub lblGoogleLogin_MouseLeave(sender As Object, e As EventArgs) Handles lblGoogleLogin.MouseLeave
         lblGoogleLogin.ForeColor = Color.White
+    End Sub
+
+    Private Sub lblPlaylistClear_Click(sender As Object, e As EventArgs) Handles lblPlaylistClear.Click
+        userSettingDropDown.changeName("Show Video", "Hide Video")
+
     End Sub
 
     Private Sub lstPlaylists_DrawItem(sender As Object, e As DrawItemEventArgs) Handles lstPlaylists.DrawItem

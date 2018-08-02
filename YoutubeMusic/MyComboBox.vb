@@ -2,6 +2,7 @@
     Inherits ComboBox
 
     Private WithEvents cms As ContextMenuStrip = Nothing
+    Private subM As ContextMenuStrip = New ContextMenuStrip
     Private Const WM_LBUTTONDOWN As Integer = &H201
     Private Const WM_LBUTTONDBLCLK As Integer = &H203
     Private formWidth As Integer
@@ -22,20 +23,23 @@
             If cms Is Nothing Then
                 cms = New ContextMenuStrip
                 cms.ShowImageMargin = False
-                'cms.ShowCheckMargin = False
+                cms.ShowCheckMargin = False
                 cms.Font = Me.Font
                 cms.ForeColor = Me.ForeColor
                 cms.BackColor = Me.BackColor
                 cms.Height = Me.DropDownHeight
                 'cms.Width = Me.DropDownWidth
                 cms.Renderer = New MyRenderer
-                cms.AutoSize = False
+                'cms.AutoSize = False
+                cms.MaximumSize() = New Size(150, 0)
                 cms.Width = 125
                 cms.Height = 42
-                AddHandler cms.MouseMove, AddressOf cms_MouseMove
                 For Each itm As String In Me.Items
-                    cms.Items.Add(itm)
+                    If Not itm.StartsWith("[E]") Then
+                        cms.Items.Add(itm)
+                    End If
                 Next
+                subM = cms
                 Dim pts As Point = Me.PointToScreen(Me.Location)
                 Dim scrn As Rectangle = Screen.FromControl(Me).WorkingArea
                 Dim loc As Point = New Point(0, Me.Height)
@@ -48,8 +52,7 @@
 
                 'loc.X = 0
                 'loc.X = formWidth - (cms.Width - Me.Width) - 18
-                Console.WriteLine(Me.DropDownWidth)
-                loc.X = -(Me.DropDownWidth) + 36 + 8
+                loc.X = -(Me.DropDownWidth) + 36 + 8 - 25
                 cms.Show(Me, loc.X, loc.Y)
                 Return
             Else
@@ -67,7 +70,14 @@
             cms = Nothing
         End If
     End Sub
-
+    Public Sub changeName(original As String, newS As String)
+        Try
+            Dim ind As Integer = Me.Items.IndexOf(original)
+            Me.Items(ind) = newS
+        Catch ex As Exception
+            MsgBox(ex)
+        End Try
+    End Sub
     Private Sub cms_ItemClicked(ByVal sender As Object, ByVal e As System.Windows.Forms.ToolStripItemClickedEventArgs) Handles cms.ItemClicked
         cms.Dispose()
         cms = Nothing
