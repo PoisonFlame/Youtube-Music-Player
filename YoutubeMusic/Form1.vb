@@ -54,6 +54,7 @@ Public Class Form1
         browser.Enabled = False
         AddHandler browser.LoadingStateChanged, AddressOf OnLoadingStateChanged
         AddHandler browser.AddressChanged, AddressOf SiteURLChanged
+        AddHandler browser.ConsoleMessage, AddressOf ConsoleMessageAsync
         hotkey.Register(HotKeyRegistryClass.Modifiers.MOD_NONE, Keys.MediaPlayPause)
         hotkey.Register(HotKeyRegistryClass.Modifiers.MOD_NONE, Keys.MediaNextTrack)
         hotkey.Register(HotKeyRegistryClass.Modifiers.MOD_NONE, Keys.MediaPreviousTrack)
@@ -86,6 +87,33 @@ Public Class Form1
 
         DefaultCard()
     End Sub
+
+    Private Sub ConsoleMessageAsync(sender As Object, e As ConsoleMessageEventArgs)
+        'If (e.Message.StartsWith("vData")) Then
+        '    Dim Str As String() = e.Message.Substring(6).Split(",")
+        '    videoID = Str(0)
+        '    currentTime = Str(1)
+        '    duration = Str(2)
+        '    volume = CInt(Str(3))
+        '    title = Str(4)
+        '    state = getState(Str(5))
+        '    If Me.InvokeRequired Then
+        '        BeginInvoke(Sub() 
+        '        'MsgBox(videoID & " " & currentTime & " " & duration & " " & volume & " " & title & " " & str(5))
+        '        Dim clt As WebClient = New WebClient
+        '        Dim img As Bitmap = CType(Bitmap.FromStream(New MemoryStream(clt.DownloadData("https://img.youtube.com/vi/" + videoID + "/hqdefault.jpg"))), Bitmap)
+        '        picThumbnail.Image = img
+        '        lblVideoTitle.Text = title
+        '        lblDuration.Text = convertSecondsToTime(duration)
+        '        trkDuration.Maximum = CInt(duration)
+        '        lblCurrentTime.Text = convertSecondsToTime(currentTime)
+        '        trkDuration.Value = CInt(Double.Parse(currentTime))
+        '        tmrUpdateDisp.Start()
+        '    End If
+
+        'End If
+    End Sub
+
     Private Sub userSettingDropDown_SelectedIndexChanged()
         Dim ind As Integer = userSettingDropDown.SelectedIndex
         Dim item As String = userSettingDropDown.Items.Item(ind).ToString
@@ -213,7 +241,13 @@ Public Class Form1
         End If
     End Sub
     Function getState(state As String) As String
-        Dim st As Integer = CInt(state)
+        Dim st As Integer
+        Try
+            st = CInt(state)
+        Catch ex As Exception
+            st = -1
+        End Try
+        'Dim st As Integer = CInt(state)
         If st = -1 Then
             DefaultCard()
             mControls.PlaybackStatus = MediaPlaybackStatus.Stopped
@@ -235,11 +269,16 @@ Public Class Form1
             Return "Buffering"
         ElseIf st = 5 Then
             Return "Video Cued"
+        Else
+            mControls.IsEnabled = True
+            mControls.PlaybackStatus = MediaPlaybackStatus.Playing
+            Return "Playing"
         End If
     End Function
     Private Sub tmrSettings_Tick(sender As Object, e As EventArgs) Handles tmrSettings.Tick
         If isPlayerReady = True Then
             removeOverlay()
+
 
             If songPlayed Then
                 browser.EvaluateScriptAsync("getVideoData();").ContinueWith(Function(x)
@@ -257,9 +296,18 @@ Public Class Form1
             End If
 
         End If
+        If Me.InvokeRequired Then
+            BeginInvoke(Sub()
+                            tm()
+                        End Sub)
+        Else
+            tm()
+        End If
+    End Sub
+    Sub tm()
         If Not videoID = "null" And songPlayed Then
             Dim clt As WebClient = New WebClient
-            Dim img As Bitmap = Bitmap.FromStream(New MemoryStream(clt.DownloadData("https://img.youtube.com/vi/" + videoID + "/hqdefault.jpg")))
+            Dim img As Bitmap = CType(Bitmap.FromStream(New MemoryStream(clt.DownloadData("https://img.youtube.com/vi/" + videoID + "/hqdefault.jpg"))), Bitmap)
             picThumbnail.Image = img
             lblVideoTitle.Text = title
             lblDuration.Text = convertSecondsToTime(duration)
@@ -286,7 +334,7 @@ Public Class Form1
 
 
         trkVolume.Value = CInt(volume)
-        userSettingDropDown.UpdateWidth(Me.Location.X + Me.Width)
+        userSettingDropDown.updateWidth(Me.Location.X + Me.Width)
     End Sub
 
     Private Sub pnlBrowser_Click(sender As Object, e As EventArgs) Handles pnlBrowser.Click
@@ -304,6 +352,7 @@ Public Class Form1
         Else
             pnlBrowser.Visible = False
         End If
+
 
         If Not My.Settings.accessToken = "null" Then
             Dim cltSecrets As New ClientSecrets
