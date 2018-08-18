@@ -22,8 +22,8 @@ Public Module userSettingsDropdownOptions
 
     Private Async Sub Login()
         Dim cltSecrets As New ClientSecrets
-        cltSecrets.ClientId = Form1.oauthClientID
-        cltSecrets.ClientSecret = Form1.clientSecret
+        cltSecrets.ClientId = Util.getClientID
+        cltSecrets.ClientSecret = Util.getClientSecret
         Form1.credentials = Await GoogleWebAuthorizationBroker.AuthorizeAsync(cltSecrets, {YouTubeService.Scope.Youtube, YouTubeService.Scope.YoutubeReadonly}, "user", CancellationToken.None)
         My.Settings.accessToken = Form1.credentials.Token.AccessToken.ToString
         My.Settings.Save()

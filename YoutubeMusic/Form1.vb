@@ -19,6 +19,7 @@ Imports System.IO.WindowsRuntimeStreamExtensions
 Imports Google.Apis.Auth.OAuth2
 Imports System.Threading
 Imports Google.Apis.YouTube
+Imports Google.Apis.Util.Store
 
 Public Class Form1
     Private WithEvents browser As WinForms.ChromiumWebBrowser
@@ -33,10 +34,6 @@ Public Class Form1
     Dim mControls As SystemMediaTransportControls = mPlayer.SystemMediaTransportControls
     Dim dispUpdater As SystemMediaTransportControlsDisplayUpdater = mControls.DisplayUpdater
     Dim timeProperties As SystemMediaTransportControlsTimelineProperties = New SystemMediaTransportControlsTimelineProperties()
-    Dim hiddenPath As String = Path.GetFullPath(Path.Combine(My.Computer.FileSystem.CurrentDirectory.ToString, "..\..\..\")) + "HiddenContent\"
-    Dim apiKey As String = My.Computer.FileSystem.ReadAllText(hiddenPath + "key_api.txt")
-    Public oauthClientID As String = My.Computer.FileSystem.ReadAllText(hiddenPath + "oauth_client.txt")
-    Public clientSecret As String = My.Computer.FileSystem.ReadAllText(hiddenPath + "client_secret.txt")
     Public credentials As UserCredential
     Public youtubeService As YouTubeService
     Public playListIDs As ArrayList = New ArrayList
@@ -356,11 +353,11 @@ Public Class Form1
 
         If Not My.Settings.accessToken = "null" Then
             Dim cltSecrets As New ClientSecrets
-            cltSecrets.ClientId = oauthClientID
-            cltSecrets.ClientSecret = clientSecret
+            cltSecrets.ClientId = Util.getClientID
+            cltSecrets.ClientSecret = Util.getClientSecret
             cmbUserSettings.Items.Add("Logout")
-            credentials = Await GoogleWebAuthorizationBroker.AuthorizeAsync(cltSecrets, {YouTubeService.Scope.Youtube, YouTubeService.Scope.YoutubeReadonly}, "user", CancellationToken.None)
 
+            credentials = Await GoogleWebAuthorizationBroker.AuthorizeAsync(cltSecrets, {YouTubeService.Scope.Youtube, YouTubeService.Scope.YoutubeReadonly}, "user", CancellationToken.None, Util.getDataStore)
 
 
             Dim bcs = New BaseClientService.Initializer()
