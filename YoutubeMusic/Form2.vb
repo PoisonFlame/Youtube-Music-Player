@@ -1,19 +1,22 @@
 ﻿Imports System.Threading
 Imports Google.Apis.Auth.OAuth2
 Imports Google.Apis.Auth.OAuth2.Flows
+Imports Google.Apis.Services
 Imports Google.Apis.Util.Store
 Imports Google.Apis.YouTube.v3
 
 Public Class Form2
     Dim res As Boolean
-    Private Async Sub Form2_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-
+    Private Sub Form2_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        GetAuth()
+    End Sub
+    Public Async Sub GetAuth()
         res = Await IsUserAuthenticated()
 
         If res = True Then
-            Label1.Text = "Authenticated"
+            lblAuthNotice.Text = "Authenticated"
         Else
-            Label1.Text = "Not Authenticated"
+            lblAuthNotice.Text = "Not Authenticated"
         End If
     End Sub
     Public Async Function IsUserAuthenticated() As Task(Of Boolean)
@@ -37,22 +40,34 @@ Public Class Form2
         End If
     End Function
 
-    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
-        Form1.Show()
+    Private Async Sub btnSignIn_Click(sender As Object, e As EventArgs) Handles btnSignIn.Click
+
+        Dim cltSecrets As New ClientSecrets
+        cltSecrets.ClientId = Util.getClientID
+        cltSecrets.ClientSecret = Util.getClientSecret
+
+        Dim credentials = Await GoogleWebAuthorizationBroker.AuthorizeAsync(cltSecrets, {YouTubeService.Scope.Youtube, YouTubeService.Scope.YoutubeReadonly}, "user", CancellationToken.None, CType(Util.getDataStore, IDataStore))
+
+        Dim bcs = New BaseClientService.Initializer()
+        bcs.HttpClientInitializer = credentials
+        bcs.ApplicationName = "SpoTube"
+
+        GetAuth()
+
     End Sub
 
-    Private Sub Label1_Click(sender As Object, e As EventArgs) Handles Label1.Click
+    Private Sub Label1_Click(sender As Object, e As EventArgs) Handles lblAuthNotice.Click
 
     End Sub
 
-    Private Sub Label1_TextChanged(sender As Object, e As EventArgs) Handles Label1.TextChanged
-        If Label1.Text = "Authenticated" Then
+    Private Sub Label1_TextChanged(sender As Object, e As EventArgs) Handles lblAuthNotice.TextChanged
+        If lblAuthNotice.Text = "Authenticated" Then
             Form1.Show()
             Me.Close()
         End If
     End Sub
 
-    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
+    Private Sub Button2_Click(sender As Object, e As EventArgs)
         Me.Hide()
 
     End Sub

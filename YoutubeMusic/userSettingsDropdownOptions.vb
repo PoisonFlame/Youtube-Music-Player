@@ -68,6 +68,8 @@ Public Module userSettingsDropdownOptions
         Form1.lstPlaylists.Items.Clear()
         Form1.lstPlaylists.Items.Add("No Info Available")
         Form1.lstPlaylists.Items.Add("Login to See Playlists")
+        Form2.Show()
+        Form1.Close()
     End Sub
     Private Sub ShowVideo()
         Form1.userSettingDropDown.Items.Item(Form1.userSettingDropDown.Items.IndexOf("Show Video")) = "[E]Show Video"

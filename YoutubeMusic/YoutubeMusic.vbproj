@@ -262,6 +262,7 @@
     <None Include="Resources\loading.gif" />
     <None Include="Resources\loading2.gif" />
     <None Include="Resources\spoTubeLogo.png" />
+    <None Include="Resources\btn_google_signin_light_normal_web.png" />
     <Content Include="Youtube-boxy.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />

@@ -44,7 +44,9 @@ Public Class Form1
     Public Sub New()
         InitializeComponent()
         Dim settings As New CefSettings()
-        CefSharp.Cef.Initialize(settings)
+        If CefSharp.Cef.IsInitialized = False Then
+            CefSharp.Cef.Initialize(settings)
+        End If
 
         browser = New WinForms.ChromiumWebBrowser("https://rudrasharma.net/extraStuff/welcome.php")
         pnlBrowser.Controls.Add(browser)
@@ -351,13 +353,13 @@ Public Class Form1
         End If
 
 
-        If Not My.Settings.accessToken = "null" Then
-            Dim cltSecrets As New ClientSecrets
+        'If Not My.Settings.accessToken = "null" Then
+        Dim cltSecrets As New ClientSecrets
             cltSecrets.ClientId = Util.getClientID
             cltSecrets.ClientSecret = Util.getClientSecret
             cmbUserSettings.Items.Add("Logout")
 
-            credentials = Await GoogleWebAuthorizationBroker.AuthorizeAsync(cltSecrets, {YouTubeService.Scope.Youtube, YouTubeService.Scope.YoutubeReadonly}, "user", CancellationToken.None, Util.getDataStore)
+            credentials = Await GoogleWebAuthorizationBroker.AuthorizeAsync(cltSecrets, {YouTubeService.Scope.Youtube, YouTubeService.Scope.YoutubeReadonly}, "user", CancellationToken.None, CType(Util.getDataStore, IDataStore))
 
 
             Dim bcs = New BaseClientService.Initializer()
@@ -382,8 +384,8 @@ Public Class Form1
 
 
 
-        Else
-        End If
+        'Else
+        ' End If
 
         AddUserSettings()
 
